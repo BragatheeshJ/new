@@ -1,29 +1,42 @@
-# Docker
-# Build a Docker image
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
-
 trigger:
-- JB
+- main
 
-resources:
-- repo: self
-
-variables:
-  tag: '$(Build.BuildId)'
+pool:
+  vmImage: ubuntu-latest
 
 stages:
-- stage: Build
-  displayName: Build image
+- stage: InstallAndTest
   jobs:
-  - job: Build
-    displayName: Build
+  - job: InstallAndTestJob
     pool:
-      vmImage: ubuntu-latest
+      vmImage: 'ubuntu-latest'
     steps:
-    - task: Docker@2
-      displayName: Build an image
+    - script: npm install
+      displayName: 'Install Dependencies'
+
+    - script: npm test
+      displayName: 'Run Unit Tests'
+
+- stage: RunSonarQubeAnalysis
+  jobs:
+  - job: RunSonarQubeAnalysisJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: |
+        sonar-scanner -Dsonar.projectKey=BragatheeshJ_madv \
+        -Dsonar.sources=src \
+        -Dsonar.host.url=https://sonarcloud.io \
+        -Dsonar.login=738b59952d0c82460d03b1c69ff37bbc9a5e63f9
+      displayName: 'Run SonarQube Analysis'
+
+- stage: PublishSonarQubeAnalysis
+  jobs:
+  - job: PublishSonarQubeAnalysisJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: SonarQubePublish@4
       inputs:
-        command: build
-        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-        tags: |
-          $(tag)
+        pollingTimeoutSec: '300'
+      displayName: 'Publish SonarQube Analysis'
