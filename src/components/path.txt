@@ -1,0 +1,2 @@
+git remote add origin https://gowthamchowdary2103@dev.azure.com/gowthamchowdary2103/M-ADV/_git/M-ADV
+git push -u origin --all
